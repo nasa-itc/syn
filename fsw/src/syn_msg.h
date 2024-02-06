@@ -29,7 +29,6 @@
 #define SYN_CONFIG_DL_CC            9
 #define SYN_CONFIG_ALPHA_CC         10
 #define SYN_ADD_DATA_CC             11
-#define SYN_AUTOMATE_CC             12
 
 /* 
 ** Telemetry Request Command Codes

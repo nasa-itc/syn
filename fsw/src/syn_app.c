@@ -20,11 +20,8 @@ SYN_AppData_t SYN_AppData;
 
 void* memory;
 size_t mem_req_bytes;
-#define NUMDPS 8
+#define NUMDPS 8  // This is a dumb counter for this example.  Users will need to handle how data is utilized within Synopsis.
 
-const char dp_file_names[NUMDPS][20]; // = { {"asdp000000000"}, {"asdp000000001"}, {"asdp000000002"}, {"asdp000000003"}, {"asdp000000004"}, {"asdp000000005"}, {"asdp000000006"}};
-float dp_file_sizes[NUMDPS]; 
-int dp_size = 0;
 #define MAX_DL_SIZE 100
 #define MIN_DL_SIZE 0
 
@@ -32,46 +29,9 @@ double sigma = 1.34289567767;
 float dl_size = 5.0;
 int num_files_downlinked = 0;
 
-int get_dp_index(char key[])
-{
-    for(int i = 0; i<NUMDPS; i++)
-    {
-        //printf("key: %s\n", key);
-        //printf("NAME: %s\n", dp_file_names[i]);
-        if(strcmp(dp_file_names[i], key) == 0)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
+#define SYN_DATABASE_PATH "/data/owls/db_new.db"
+#define SYN_DATABASE_CLEAN_PATH "/data/owls/db_blank.db"
 
-void dp_insert(char key[], float value)
-{
-    int index = get_dp_index(key);
-    if (index == -1) { // Key not found
-        strcpy(dp_file_names[dp_size], key);
-        dp_file_sizes[dp_size] = value;
-        dp_size++;
-    }
-    else { // Key found
-        dp_file_sizes[index] = value;
-    }
-}
-
-float get_dp_size(char key[])
-{
-    int index = get_dp_index(key);
-    if(index == -1)
-    {
-        return -1;
-    }
-    else
-    {
-        //printf("RETURNING: %f\n", dp_file_sizes[index]);
-        return dp_file_sizes[index];
-    }
-}
 
 /*
 ** Application entry point and main process loop
@@ -203,10 +163,6 @@ int32 SYN_AppInit(void)
         return status;
     }
 
-    /*
-    ** TODO: Subscribe to any other messages here
-    */
-
 
     /* 
     ** Initialize the published HK message - this HK message will contain the 
@@ -224,14 +180,10 @@ int32 SYN_AppInit(void)
                    CFE_SB_ValueToMsgId(SYN_DEVICE_TLM_MID),
                    SYN_DEVICE_TLM_LNGTH);
 
-    /*
-    ** TODO: Initialize any other messages that this app will publish
-    */
 
     /*
-    ** ITC SYNOPSIS TESTING
-    */
-  
+    ** ITC SYNOPSIS Ex Setup
+    */  
 
     // Determine memory requirements
     mem_req_bytes = 0;
@@ -242,19 +194,9 @@ int32 SYN_AppInit(void)
     itc_setup_ptasds();
 
     // Initalize App
-    memory = malloc(mem_req_bytes); 
+    memory = malloc(mem_req_bytes);  // Malloc for this example.  
     itc_app_init(mem_req_bytes, memory);    
     
-    // Creating a map for DL sizes (just to speed things up)
-
-    dp_insert("asdp000000000", 1.306);
-    dp_insert("asdp000000001", 0.773);
-    dp_insert("asdp000000002", 0.538);
-    dp_insert("asdp000000003", 1.055);
-    dp_insert("asdp000000004", 0.403);
-    dp_insert("asdp000000005", 0.635);
-    dp_insert("asdp000000006", 1.240);
-    dp_insert("asdp000000007", 0.494);
 
     /* 
     ** Always reset all counters during application initialization 
@@ -418,70 +360,21 @@ void SYN_ProcessGroundCommand(void)
             }
             break;
 
-        case SYN_AUTOMATE_CC:
-            if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
-            {
-                CFE_EVS_SendEvent(SYN_CMD_AUTOMATE_EID, CFE_EVS_EventType_INFORMATION, "SYN: Config AUTOMATED ADD DATA command received");
-                /* Command device to send HK */
-                //status = SYN_APP_CommandDevice(SYN_APP_AppData.Syn_appUart.handle, SYN_APP_DEVICE_CFG_CMD, ((SYN_APP_Config_cmd_t*) SYN_APP_AppData.MsgPtr)->DeviceCfg);
-                
-                int syn_app_status;
-
-                int dp_counter = get_dp_counter();
-                while (dp_counter < NUMDPS)
-                {
-                    //printf("DP COUNTER: %d\n", dp_counter);
-                    syn_app_status = owls_add_dpmsg();
-
-                    if(syn_app_status == 0) //Success
-                    {
-                        
-                        //printf("COUNTER: %d\n", dp_counter);
-                        char sys_cp_cmd[512];
-                        snprintf(sys_cp_cmd, sizeof(sys_cp_cmd), "cp -R %s%d %s", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/assets/asdp00000000", dp_counter, "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/onboard");
-                        //printf("COMMAND: %s\n", sys_cp_cmd);
-                        system(sys_cp_cmd);
-                        dp_counter = get_dp_counter();
-                    }
-                    else{
-                        printf("*! SYN_APP:  Unable to add additional Automated DPMSG!\n");
-                        break;
-                    }
-                    
-                    SYN_AppData.HkTelemetryPkt.DeviceCount++;
-                }
-            }
-            else
-            {
-                SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            }            
-            break;
-
+        // Add data to the synopsis database.  
+        // Users must know where the experiment data lives.
+        // This is currently handed as a simple example within the synopsis_bridge file.  Data paths can be handled in either location.  Here or within the bridge.
         case SYN_ADD_DATA_CC:
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
                 CFE_EVS_SendEvent(SYN_CMD_ADD_DATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: Config ADD DATA command received");
-                /* Command device to send HK */
-                //status = SYN_APP_CommandDevice(SYN_APP_AppData.Syn_appUart.handle, SYN_APP_DEVICE_CFG_CMD, ((SYN_APP_NoArgs_cmd_t*) SYN_APP_AppData.MsgPtr)->DeviceCfg);
-            
+
                 int syn_app_status;
 
-                int dp_counter = get_dp_counter();
-
-                syn_app_status = owls_add_dpmsg();
+                syn_app_status = owls_add_dpmsg(); // No Data passed in.  Datapath within itc_synopsis_bridge.cpp
 
                 if(syn_app_status == 0) //Success
-                {
-                    //printf("COUNTER: %d\n", dp_counter);
-                    char sys_cp_cmd[512];
-                    snprintf(sys_cp_cmd, sizeof(sys_cp_cmd), "OS_MV %s%d -> %s", "./data/owls/assets/asdp000000000/test.json", dp_counter, "./data/owls/onboard/");
-                    //printf("COMMAND: %s\n", sys_cp_cmd);
-                    OS_printf("ADDING DATA: %s\n", sys_cp_cmd);
-                    
-                    //syn_app_status = OS_mv("./data/owls/assets/asdp000000000/test.json", "./data/owls/onboard/test.json");
-                    //OS_printf("STATUS: %d\n", syn_app_status);
-                    
-                    //system(sys_cp_cmd);
+                {         
+                    OS_printf("SYN: DATA PRODUCT ADDED -> SYNOPSIS DB\n");
                 }
                 else
                 {
@@ -495,6 +388,7 @@ void SYN_ProcessGroundCommand(void)
             }            
             break; 
 
+        // Synopsis can be configured to prioritize based on size constraints.  This can be configured here.
         case SYN_CONFIG_DL_CC:
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_Config_cmd_t)) == OS_SUCCESS)
             {
@@ -502,13 +396,11 @@ void SYN_ProcessGroundCommand(void)
 
                 /* Command device to send HK */
                 uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
-                //status = SYN_CommandDevice(&SYN_AppData.SynUart.handle, SYN_DEVICE_CFG_CMD, config);
                 status = SYN_CommandDevice(&SYN_AppData.SynUart, SYN_DEVICE_CFG_CMD, config);
                 if (status == OS_SUCCESS)
                 {
                     dl_size = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 10.0);
-                    //printf("CF SIZE: %d\n", (((SYN_Config_cmd_t*) SYN_APP_AppData.MsgPtr)->DeviceCfg));
-                    printf("** SYNOPSIS DL SIZE SET: %f\n", dl_size);
+                    OS_printf("** SYNOPSIS DL SIZE SET: %f\n", dl_size);
                     SYN_AppData.HkTelemetryPkt.DeviceCount++;
                 }
                 else
@@ -517,7 +409,8 @@ void SYN_ProcessGroundCommand(void)
                 }
             }
             break;
-
+        
+        // The Alpha value can be utilized to adjust the broadness of desired data
         case SYN_CONFIG_ALPHA_CC:
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_Config_cmd_t)) == OS_SUCCESS)
             {
@@ -525,14 +418,14 @@ void SYN_ProcessGroundCommand(void)
                 
                 /* Command device to send HK */
                 uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
-                //status = SYN_CommandDevice(&SYN_AppData.SynUart.handle, SYN_DEVICE_CFG_CMD, config);
+                
                 status = SYN_CommandDevice(&SYN_AppData.SynUart, SYN_DEVICE_CFG_CMD, config);
                 if (status == OS_SUCCESS)
                 {
                     sigma = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 100.0);
-                    //printf("CF SIZE: %d\n", (((SYN_APP_Config_cmd_t*) SYN_APP_AppData.MsgPtr)->DeviceCfg));
+                    
                     owls_set_sigma(sigma);
-                    printf("** SYNOSIS ALPHA SET: %f\n", sigma);
+                    OS_printf("** SYNOPSIS ALPHA SET: %f\n", sigma);
                     SYN_AppData.HkTelemetryPkt.DeviceCount++;
                 }
                 else
@@ -549,18 +442,14 @@ void SYN_ProcessGroundCommand(void)
             */
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                printf("* RESET IN PROGRESS!\n");
+                int32 reset_status = OS_ERROR;
+                OS_printf("* SYNOPSIS RESET IN PROGRESS!\n");
                 //SYN_APP_ResetCounters();
                 dl_size = 5.0;
                 num_files_downlinked = 0;
-                char sys_rm_cmd[512];
-                snprintf(sys_rm_cmd, sizeof(sys_rm_cmd), "rm -rf %s", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/onboard/*");
-                system(sys_rm_cmd);
-                snprintf(sys_rm_cmd, sizeof(sys_rm_cmd), "rm -rf %s", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/downlink/*");
-                system(sys_rm_cmd); 
 
                 /* Second, send EVS event on successful receipt ground commands*/
-                CFE_EVS_SendEvent(SYN_CMD_RESET_DEMO_EID, CFE_EVS_EventType_INFORMATION, "SYN: MSG command received");
+                CFE_EVS_SendEvent(SYN_CMD_RESET_DEMO_EID, CFE_EVS_EventType_INFORMATION, "SYN: RESET command received");
    
                 itc_app_deinit(memory); 
                 memory = malloc(mem_req_bytes);
@@ -568,12 +457,24 @@ void SYN_ProcessGroundCommand(void)
                 reset_dp_counter();
 
                 char reset_db_cmd[512]; 
-                snprintf(reset_db_cmd, sizeof(reset_db_cmd), "rm -rf %s", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/owls_asdpdb_20230815_copy.db");                                        
-                system(reset_db_cmd);
-                snprintf(reset_db_cmd, sizeof(reset_db_cmd), "cp %s %s", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/owls_asdpdb_20230815_copy1.db", "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/owls_asdpdb_20230815_copy.db");
-                system(reset_db_cmd);
-
-                itc_app_init(mem_req_bytes, memory);
+                
+                reset_status = OS_remove(SYN_DATABASE_PATH);
+                if(reset_status != OS_SUCCESS)
+                {
+                    OS_printf("Error Removing file: %s\nError: %d", SYN_DATABASE_PATH, reset_status);
+                }
+                else
+                {
+                    reset_status = OS_cp(SYN_DATABASE_CLEAN_PATH, SYN_DATABASE_PATH);
+                    if(reset_status != OS_SUCCESS)
+                    {
+                        OS_printf("Error Resetting Database File to: %s\n", SYN_DATABASE_CLEAN_PATH);
+                    }
+                    else
+                    {
+                        itc_app_init(mem_req_bytes, memory);
+                    }
+                } 
             }
             break;
 
@@ -589,11 +490,16 @@ void SYN_ProcessGroundCommand(void)
                 /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
                 int syn_app_status;
                 syn_app_status = owls_prioritize_data();
-                //printf("Owls PRIO Return: %d\n", syn_app_status);
-                printf("** PRIORITIZATION COMPLETE\n");
+                
+                OS_printf("** PRIORITIZATION COMPLETE\n");
             }
             break;
 
+        // Synopsis wants to be part of the downlink process.
+        // It doesn't have to handle it, but it needs to know which files under analysis have been downlinked.
+        // This allows synopsis to no longer include it in its prioritization analysis.
+
+        // Currently this command code will remove the top priority file, as an example, from the synopsis db, and then re-prioritize
         case SYN_GET_PDATA_CC:
             /*
             ** First, verify the command length immediately after CC identification 
@@ -602,77 +508,12 @@ void SYN_ProcessGroundCommand(void)
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
                 /* Second, send EVS event on successful receipt ground commands*/
-                CFE_EVS_SendEvent(SYN_CMD_GET_PDATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: GET_P_DATA command received");
+                CFE_EVS_SendEvent(SYN_CMD_GET_PDATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: GET_PDATA command received");
                 /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
                 int syn_app_status;
-                float total_dl_size = 0.0;
-                //printf("DL SIZE: %f\n", dl_size);
-                printf("* DOWNLINKING IN PROGRESS\n");
-                int total_dps_added = get_dp_counter();
-
-                for(int i = 0; i < total_dps_added; i++)
-                {
-                    //printf("CURRENT LOOP (i): %d\n", i);
-                    if(total_dl_size > dl_size) break;
-
-                    char* test_string = owls_get_prioritized_data(i);
-                    if (test_string != NULL )
-                    {
-                        //printf("Test String: %s\n", test_string);
-                        char* cp_test_string = strdup(test_string);
-                        //printf("SYN_APP: Downlink: %s\n", cp_test_string);
-                        char* base_name = basename(cp_test_string);
-                        //printf("BASENAME: %s\n", base_name);
-                        char base_name_noext[256];
-                        sscanf(base_name, "%[^.]", base_name_noext);
-
-                        //printf("BASENAME_NOEXT: %s\n", base_name_noext);
-                        float test_string_dp_size = get_dp_size(base_name_noext);
-                        total_dl_size += test_string_dp_size;
-                        //printf("TOTAL DL_SIZE: %f\n", total_dl_size);
-
-                        if(total_dl_size <= dl_size)
-                        {
-                            // printf("Full String: %s\n", test_string);
-                            // printf("Base Name: %s\n", base_name);
-                            char destination_name[560];
-                            char source_name[560];
-                            char mv_command[560];
-
-                            snprintf(destination_name, sizeof(destination_name), "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/downlink/%s", base_name_noext);  
-                            snprintf(source_name, sizeof(source_name), "/home/nos3/Desktop/github-nos3/fsw/build/exe/cpu1/data/owls/onboard/%s", base_name_noext);
-                            //printf("DESTINATION NAME: %s\n", destination_name);
-                            //printf("FILE NAME: %s\n", base_name);
-                            //printf("SOURCE NAME: %s\n", source_name);
-                            //int32 status = rename(source_name, destination_name);
-                            snprintf(mv_command, sizeof(mv_command), "mv %s %s", source_name, destination_name);
-                            //printf("COMMAND: %s\n", mv_command);
-                            int32 status = system(mv_command);                            
-                            //printf("STATUS: %d\n", status);
-
-                            //int32 status = OS_mv(source_name, destination_name);
-                            owls_update_downlink_status(test_string);
-                            
-                            owls_destroy_prioritized_data_string(test_string);
-                            
-                        }
-                        else
-                        {
-                            total_dl_size -= test_string_dp_size;
-                            owls_destroy_prioritized_data_string(test_string);
-                        }
-                        //free(base_name);
-                    }
-                    else
-                    {
-                        printf("*! No Remaining Priority Data to Downlink\n");
-                        break;
-                    }
-                }
-                //printf("Re Prioritize Data Products");
-                //syn_app_status = owls_prioritize_data();
-                //printf("Owls PRIO Return: %d\n", syn_app_status); 
-                printf("** DOWNLINKING COMPLETE - Wait for refresh\n");
+                owls_update_downlink_status_prio1();
+                
+                OS_printf("** SYN: Updated  DL Status Complete\n");
             }
             break;
 
@@ -687,8 +528,7 @@ void SYN_ProcessGroundCommand(void)
                 CFE_EVS_SendEvent(SYN_CMD_DISP_PDATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: DISPLAY PDATA command received");
                 /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
                 int syn_app_status;
-                syn_app_status = owls_display_prioritized_data();
-                //printf("Owls GET PRIO Return: %d\n", syn_app_status);
+                syn_app_status = owls_display_prioritized_data();  
             }
             break;
 

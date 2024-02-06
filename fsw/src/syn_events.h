@@ -52,6 +52,5 @@
 #define SYN_CMD_CONFIG_ALPHA_EID      49
 #define SYN_CMD_CONFIG_DL_EID         50
 #define SYN_CMD_ADD_DATA_EID          51
-#define SYN_CMD_AUTOMATE_EID          52
 
 #endif /* _SYN_EVENTS_H_ */

@@ -1,38 +1,69 @@
 # Syn - NOS3 Component
 This repository contains the NOS3 Syn Component.
 This includes flight software (FSW), ground software (GSW), simulation, and support directories.
+This is a component example for the SYNOPSIS library created by JPL. 
 
-## Component Template
-This component template utilizes canned files from the existing [syn component](https://github.com/nasa-itc/syn) to generate a new component to do development in.
+The SYNOPSIS library and this component, need to be integrated with specific science missions and their data.  Canned data from the OWLS project is being 
+utilized to establish this example.  There are eight sets of data within this canned directory that are used within this SYN component example.
 
-Expected utilization:  
-* Determine the desired component name
-* Create a new submodule for the component via GitHub
-* Add the submodule to this project
-  * `git submodule init`
-  * `git submodule add -f -b main <New_Submodule_Link> ./components/<New_Component_Name>`
-* Generate the new files
-  * `./generate_template.sh <New_Component_Name>`
-    * Note that <New_Component_Name> must be <= 10 characters by default or you'll need to shorten the software bus pipe name after the fact
-* The new files should be placed in the submodule
-  * `../<New_Component_Name>/`
-* Commit the new files to the submodule
-  * `git add * && git add .gitignore`
-  * `git commit -m "Initial component template based on version 0.0.0"`
-* Add new component to flight software (fsw) in the following files:
-  * `./fsw/nos3_defs/cpu1_cfe_es_startup.scr`
-  * `./fsw/nos3_defs/targets.cmake`
-  * `./fsw/nos3_defs/tables/*`
-* Add new component to ground software (gsw) in the following files:
-  * `./gsw/cosmos/config/system/nos3_system.txt`
-  * `./gsw/cosmos/config/tools/cmd_tlm_server/nos3_cmd_tlm_server.txt`
-  * `./gsw/scripts/launch.sh`
+Because this is an exammple, it does not currently utilize the radio for any type of downlink procedures.  It will be the responsibility of the users of the component
+to establish connection to, and the location of experiment data, as well as how synopsis will interact with this data.  Including how it is added to the SYNOPSIS
+database, prioritization procedures, as well as any downlink functionality - as SYNOPSIS needs to know when the files that are part of its priortization database have
+been successfully downlinked.  This process can be configured to be manual, or automatic at the preferance of users, missions, and types of data.
+
+## Component Configurations
+This [syn component](https://aetd-git.gsfc.nasa.gov/itc/jpl/synopsis/syn_component/syn_nos3) has several configuration options:
+* Data Paths - Configured within the synopsis_bridge
+  * Data Path
+  * Database Path
+  * Data Bundle Paths
+  * Similarity File Path
+  * Rules Path
+These paths are defined at the top of the bridge file.  Because this is an example, where and how these are passed to the SYNOPSIS libary is dependant upon the project.  However, SYNOPSIS must be aware of the location of these files.
+
+Additionally, the component needs to be made aware of two of these paths as well:
+* Database Path
+* Clean Database Path
+
+These may also be reconfigured, or passed in elsewhere.  How this is accomplished may also be changed per mission SYNOPSIS needs to be integrated into.  In this example, these two paths are utilized for resetting the database, and the component.  It is up to the user to determine the persistance of the database file, file locations, and how components would need to be reset.
+
+## Component Usage
+The SYN component is initalized as with other components within the SYN_AppInit function.  For this example, memory is located within this function, as well as the initialization of the SYNOPSIS Library.
+
+The SYN component has all of the default command codes as the sample component.  However additional components have been added in order to manually utilize the SYNOPSIS library.  These commands are as follows:
+
+# Default Command Codes
+* SYN_NOOP_CC
+* SYN_RESET_COUNTERS_CC
+* SYN_ENABLE_CC
+* SYN_DIABLE_CC
+* SYN_CONFIG_CC
+
+# SYN Component Example Command Codes
+* SYN_ADD_DATA_CC - Add individual data components to SYNOPSIS (8 total)
+* SYN_CONFIG_DL_CC - SYNOPSIS can prioritize data based on download constraints.  This command code allows for this modification
+* SYN_CONFIG_ALPHA_CC - SYNOPSIS can prioritize data based on their variance from the type of data desired.  This value allows for this manipulation.
+* SYN_RESET_CC - Resets the SYN component and SYNOPSIS library application back to a 'clean slate' - including the prioritzation database.
+* SYN_PRIO_CC - Prioritizes the data based on the downlink, sigma, similarities, and rules files.  This does not currently return any frames of data, but a display to FSW.  How this is handled is up to the user.
+* SYN_GET_PDATA_CC - This command code can be configured multiple ways. It can be part of the downlink process, or however users prefer to get their prioritized data.  In this case, as this is an example, this function simply pops off the most prioritized file from the stack, and sets its downlink flag within the SYNOPSIS database as having been downlinked.  This allows it to no longer be part of the prioritization process.
+This function REPRIORITIZES the data on each use.
+* SYN_DISP_PDATA_CC - Displays the current prioritized list to the FSW terminal.
+
+# SYN Component Usage
+To utilize the SYNOPSIS library within the SYN component, users need to follow some basic steps:
+* Adjust Downlink - If there are downlink contraints that users would like to consider within the collected data, or even apply to data anyway, this command code should be utilized.
+* Adjust Sigma - If users would like to modifiy the variance of data that is prioritized, users should utilize this command code.
+
+Following setup, users must add the data to be analyzed to the SYNOPSIS database.
+* Add Data - Data is added individually within this example.  However this can be modified to be automated, or implemented in the manner that is necessary for the mission being analyzed.
+* Priorize Data - Use the PRIO command code to prioritize the data once it has been added to the database.
+* Get Data - Determine how the data will be passed to ground.  This process currently flags the highest priority data as having been downlinked, to highlight SYNOPSIS capabilities (but does not move the data in any way).  This is up to mission as to how this will actually be implemented.  However, SYNOPSIS needs to know when data is no longer available.
+* Reset and continue to experiment
 
 ## Overview
-In addition to being used by the template generator, the syn component provides an executable example for the user.  This syn component is a UART device that accepts multiple commands, including requests for telemetry and data.
+The syn component provides an executable SYNOPSIS example for the user.  This syn component is a UART device that accepts multiple commands, including requests for telemetry and data.
 The available FSW is for use in the core Flight System (cFS) while the GSW supports COSMOS.
 A NOS3 simulation is available which includes both syn and 42 data providers.
-
 
 # Device Communications
 The protocol, commands, and responses of the component are captured below.
@@ -127,12 +158,9 @@ Optionally the 42 data provider can be configured in the `nos3-simulator.xml`:
 ```
 
 
-# Documentation
-If this syn application had an ICD and/or test procedure, they would be linked here.
 
 ## Releases
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the tags on this repository.
-* v1.0.0 - X/Y/Z 
-  - Updated to be a component repository including FSW, GSW, Sim, and Standalone checkout
-* v0.1.0 - 10/9/2021 
+
+* v0.1.0 - 02/06/20214
   - Initial release with version tagging
