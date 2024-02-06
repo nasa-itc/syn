@@ -268,7 +268,6 @@ void SYN_ProcessCommandPacket(void)
 
 /*
 ** Process ground commands
-** TODO: Add additional commands required by the specific component
 */
 void SYN_ProcessGroundCommand(void)
 {
@@ -360,6 +359,9 @@ void SYN_ProcessGroundCommand(void)
             }
             break;
 
+        /*
+        ** Add Data Command
+        */
         // Add data to the synopsis database.  
         // Users must know where the experiment data lives.
         // This is currently handed as a simple example within the synopsis_bridge file.  Data paths can be handled in either location.  Here or within the bridge.
@@ -388,6 +390,9 @@ void SYN_ProcessGroundCommand(void)
             }            
             break; 
 
+        /*  
+        ** Configure Downlink Command
+        */
         // Synopsis can be configured to prioritize based on size constraints.  This can be configured here.
         case SYN_CONFIG_DL_CC:
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_Config_cmd_t)) == OS_SUCCESS)
@@ -409,7 +414,9 @@ void SYN_ProcessGroundCommand(void)
                 }
             }
             break;
-        
+        /*
+        ** Configure Sigma Command
+        */
         // The Alpha value can be utilized to adjust the broadness of desired data
         case SYN_CONFIG_ALPHA_CC:
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_Config_cmd_t)) == OS_SUCCESS)
@@ -434,7 +441,9 @@ void SYN_ProcessGroundCommand(void)
                 }
             }
             break;
-
+        /*
+        ** Reset SYNOPSIS Command
+        */
         case SYN_RESET_CC:
             /*
             ** First, verify the command length immediately after CC identification 
@@ -477,7 +486,9 @@ void SYN_ProcessGroundCommand(void)
                 } 
             }
             break;
-
+        /*
+        ** Prioritize Data Command
+        */
         case SYN_PRIO_CC:
             /*
             ** First, verify the command length immediately after CC identification 
@@ -495,6 +506,9 @@ void SYN_ProcessGroundCommand(void)
             }
             break;
 
+        /*
+        ** Get Prioritized Data Command
+        */
         // Synopsis wants to be part of the downlink process.
         // It doesn't have to handle it, but it needs to know which files under analysis have been downlinked.
         // This allows synopsis to no longer include it in its prioritization analysis.
@@ -517,6 +531,9 @@ void SYN_ProcessGroundCommand(void)
             }
             break;
 
+        /*
+        ** Display Prioritized Data Command
+        */
         case SYN_DISP_PDATA_CC:
             /*
             ** First, verify the command length immediately after CC identification 
@@ -548,7 +565,6 @@ void SYN_ProcessGroundCommand(void)
 
 /*
 ** Process Telemetry Request - Triggered in response to a telemetery request
-** TODO: Add additional telemetry required by the specific component
 */
 void SYN_ProcessTelemetryRequest(void)
 {
@@ -661,7 +677,6 @@ void SYN_ResetCounters(void)
 
 /*
 ** Enable Component
-** TODO: Edit for your specific component implementation
 */
 void SYN_Enable(void)
 {
@@ -706,7 +721,6 @@ void SYN_Enable(void)
 
 /*
 ** Disable Component
-** TODO: Edit for your specific component implementation
 */
 void SYN_Disable(void)
 {
