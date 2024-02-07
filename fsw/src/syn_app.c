@@ -20,17 +20,9 @@ SYN_AppData_t SYN_AppData;
 
 void* memory;
 size_t mem_req_bytes;
-#define NUMDPS 8  // This is a dumb counter for this example.  Users will need to handle how data is utilized within Synopsis.
-
-#define MAX_DL_SIZE 100
-#define MIN_DL_SIZE 0
-
 double sigma = 1.34289567767;
 float dl_size = 5.0;
 int num_files_downlinked = 0;
-
-#define SYN_DATABASE_PATH "/data/owls/db_new.db"
-#define SYN_DATABASE_CLEAN_PATH "/data/owls/db_blank.db"
 
 
 /*
@@ -95,7 +87,7 @@ void SYN_AppMain(void)
     /*
     ** Disable component, which cleans up the interface, upon exit
     */
-    SYN_Disable();
+    //SYN_Disable();
 
     /*
     ** Performance log exit stamp
@@ -356,7 +348,6 @@ void SYN_ProcessGroundCommand(void)
 
                 /* Command device to send HK */
                 uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
-                status = SYN_CommandDevice(&SYN_AppData.SynUart, SYN_DEVICE_CFG_CMD, config);
                 if (status == OS_SUCCESS)
                 {
                     dl_size = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 10.0);
@@ -381,7 +372,6 @@ void SYN_ProcessGroundCommand(void)
                 /* Command device to send HK */
                 uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
                 
-                status = SYN_CommandDevice(&SYN_AppData.SynUart, SYN_DEVICE_CFG_CMD, config);
                 if (status == OS_SUCCESS)
                 {
                     sigma = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 100.0);
@@ -566,7 +556,6 @@ void SYN_ReportHousekeeping(void)
     /* Check that device is enabled */
     if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_ENABLED)
     {
-        status = SYN_RequestHK(&SYN_AppData.SynUart, (SYN_Device_HK_tlm_t*) &SYN_AppData.HkTelemetryPkt.DeviceHK);
         if (status == OS_SUCCESS)
         {
             SYN_AppData.HkTelemetryPkt.DeviceCount++;
@@ -597,7 +586,6 @@ void SYN_ReportDeviceTelemetry(void)
     /* Check that device is enabled */
     if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_ENABLED)
     {
-        status = SYN_RequestData(&SYN_AppData.SynUart, (SYN_Device_Data_tlm_t*) &SYN_AppData.DevicePkt.Syn);
         if (status == OS_SUCCESS)
         {
             SYN_AppData.HkTelemetryPkt.DeviceCount++;

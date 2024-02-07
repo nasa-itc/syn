@@ -19,7 +19,7 @@
 #include "syn_msg.h"
 #include "syn_msgids.h"
 #include "syn_version.h"
-#include "hwlib.h"
+//#include "hwlib.h"
 
 
 /*
@@ -62,12 +62,6 @@ typedef struct
 	*/
     SYN_Device_tlm_t DevicePkt;      /* Device specific data packet */
 
-    /* 
-    ** Device protocol
-    ** TODO: Make specific to your application
-    */ 
-    uart_info_t SynUart;             /* Hardware protocol definition */
-
 } SYN_AppData_t;
 
 
@@ -93,8 +87,6 @@ void  SYN_ProcessTelemetryRequest(void);
 void  SYN_ReportHousekeeping(void);
 void  SYN_ReportDeviceTelemetry(void);
 void  SYN_ResetCounters(void);
-void  SYN_Enable(void);
-void  SYN_Disable(void);
 int32 SYN_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expected_length);
 
 #endif /* _SYN_APP_H_ */

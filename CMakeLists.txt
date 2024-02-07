@@ -10,7 +10,7 @@ include_directories(fsw/platform_inc)
 include_directories(fsw/src)
 include_directories(synopsis/include)
 
-include_directories(${hwlib_MISSION_DIR}/fsw/public_inc)
+#include_directories(${hwlib_MISSION_DIR}/fsw/public_inc)
 
 file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${TGTSYS_${SYSVAR}}/data)
 file(COPY fsw/owls DESTINATION ${CMAKE_INSTALL_PREFIX}/${TGTSYS_${SYSVAR}}/data/)

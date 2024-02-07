@@ -12,7 +12,7 @@
 ** Required header files.
 */
 #include "device_cfg.h"
-#include "hwlib.h"
+//#include "hwlib.h"
 #include "syn_platform_cfg.h"
 
 
