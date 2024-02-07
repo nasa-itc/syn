@@ -12,7 +12,6 @@
 ** Include Files
 */
 #include "cfe.h"
-#include "syn_device.h"
 #include "syn_events.h"
 #include "syn_platform_cfg.h"
 #include "syn_perfids.h"

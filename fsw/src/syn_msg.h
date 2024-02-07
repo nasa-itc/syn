@@ -10,7 +10,6 @@
 #define _SYN_MSG_H_
 
 #include "cfe.h"
-#include "syn_device.h"
 
 
 /*
@@ -62,7 +61,7 @@ typedef struct
 typedef struct 
 {
     CFE_MSG_TelemetryHeader_t TlmHeader;
-    SYN_Device_Data_tlm_t Syn;
+    //SYN_Device_Data_tlm_t Syn;
 
 } __attribute__((packed)) SYN_Device_tlm_t;
 #define SYN_DEVICE_TLM_LNGTH sizeof ( SYN_Device_tlm_t )
@@ -83,7 +82,7 @@ typedef struct
     ** TODO: Edit and add specific telemetry values to this struct
     */
     uint8   DeviceEnabled;
-    SYN_Device_HK_tlm_t DeviceHK;
+    //SYN_Device_HK_tlm_t DeviceHK;
 
 } __attribute__((packed)) SYN_Hk_tlm_t;
 #define SYN_HK_TLM_LNGTH sizeof ( SYN_Hk_tlm_t )

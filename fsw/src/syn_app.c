@@ -200,9 +200,6 @@ int32 SYN_AppInit(void)
     ** Note that counters are excluded as they were reset in the previous code block
     */
     SYN_AppData.HkTelemetryPkt.DeviceEnabled = SYN_DEVICE_DISABLED;
-    SYN_AppData.HkTelemetryPkt.DeviceHK.DeviceCounter = 0;
-    SYN_AppData.HkTelemetryPkt.DeviceHK.DeviceConfig = 0;
-    SYN_AppData.HkTelemetryPkt.DeviceHK.DeviceStatus = 0;
 
     /* 
      ** Send an information event that the app has initialized. 
@@ -283,15 +280,9 @@ void SYN_ProcessGroundCommand(void)
         ** NOOP Command
         */
         case SYN_NOOP_CC:
-            /*
-            ** First, verify the command length immediately after CC identification 
-            ** Note that VerifyCmdLength handles the command and command error counters
-            */
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                /* Second, send EVS event on successful receipt ground commands*/
                 CFE_EVS_SendEvent(SYN_CMD_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: NOOP command received");
-                /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
             }
             break;
 
@@ -346,8 +337,6 @@ void SYN_ProcessGroundCommand(void)
             {
                 CFE_EVS_SendEvent(SYN_CMD_CONFIG_DL_EID, CFE_EVS_EventType_INFORMATION, "SYN: Config DL command received");
 
-                /* Command device to send HK */
-                uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
                 if (status == OS_SUCCESS)
                 {
                     dl_size = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 10.0);
@@ -369,9 +358,6 @@ void SYN_ProcessGroundCommand(void)
             {
                 CFE_EVS_SendEvent(SYN_CMD_CONFIG_ALPHA_EID, CFE_EVS_EventType_INFORMATION, "SYN: Config ALPHA command received");
                 
-                /* Command device to send HK */
-                uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg);
-                
                 if (status == OS_SUCCESS)
                 {
                     sigma = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 100.0);
@@ -389,11 +375,7 @@ void SYN_ProcessGroundCommand(void)
         /*
         ** Reset SYNOPSIS Command
         */
-        case SYN_RESET_CC:
-            /*
-            ** First, verify the command length immediately after CC identification 
-            ** Note that VerifyCmdLength handles the command and command error counters
-            */
+        case SYN_RESET_CC: 
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
                 int32 reset_status = OS_ERROR;
@@ -402,15 +384,12 @@ void SYN_ProcessGroundCommand(void)
                 dl_size = 5.0;
                 num_files_downlinked = 0;
 
-                /* Second, send EVS event on successful receipt ground commands*/
                 CFE_EVS_SendEvent(SYN_CMD_RESET_DEMO_EID, CFE_EVS_EventType_INFORMATION, "SYN: RESET command received");
    
                 itc_app_deinit(memory); 
                 memory = malloc(mem_req_bytes);
                
                 reset_dp_counter();
-
-                char reset_db_cmd[512]; 
                 
                 reset_status = OS_remove(SYN_DATABASE_PATH);
                 if(reset_status != OS_SUCCESS)
@@ -435,17 +414,11 @@ void SYN_ProcessGroundCommand(void)
         ** Prioritize Data Command
         */
         case SYN_PRIO_CC:
-            /*
-            ** First, verify the command length immediately after CC identification 
-            ** Note that VerifyCmdLength handles the command and command error counters
-            */
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                /* Second, send EVS event on successful receipt ground commands*/
                 CFE_EVS_SendEvent(SYN_CMD_PRIO_EID, CFE_EVS_EventType_INFORMATION, "SYN: PRIORITIZE command received");
-                /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
-                int syn_app_status;
-                syn_app_status = owls_prioritize_data();
+
+                owls_prioritize_data();
                 
                 OS_printf("** PRIORITIZATION COMPLETE\n");
             }
@@ -460,16 +433,10 @@ void SYN_ProcessGroundCommand(void)
 
         // Currently this command code will remove the top priority file, as an example, from the synopsis db, and then re-prioritize
         case SYN_GET_PDATA_CC:
-            /*
-            ** First, verify the command length immediately after CC identification 
-            ** Note that VerifyCmdLength handles the command and command error counters
-            */
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                /* Second, send EVS event on successful receipt ground commands*/
                 CFE_EVS_SendEvent(SYN_CMD_GET_PDATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: GET_PDATA command received");
-                /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
-                int syn_app_status;
+                
                 owls_update_downlink_status_prio1();
                 
                 OS_printf("** SYN: Updated  DL Status Complete\n");
@@ -480,17 +447,10 @@ void SYN_ProcessGroundCommand(void)
         ** Display Prioritized Data Command
         */
         case SYN_DISP_PDATA_CC:
-            /*
-            ** First, verify the command length immediately after CC identification 
-            ** Note that VerifyCmdLength handles the command and command error counters
-            */
             if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                /* Second, send EVS event on successful receipt ground commands*/
                 CFE_EVS_SendEvent(SYN_CMD_DISP_PDATA_EID, CFE_EVS_EventType_INFORMATION, "SYN: DISPLAY PDATA command received");
-                /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
-                int syn_app_status;
-                syn_app_status = owls_display_prioritized_data();  
+                owls_display_prioritized_data();  
             }
             break;
 
@@ -513,7 +473,6 @@ void SYN_ProcessGroundCommand(void)
 */
 void SYN_ProcessTelemetryRequest(void)
 {
-    int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 

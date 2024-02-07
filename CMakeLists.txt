@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6.4)
 project(CFS_SYN_APP C)
 
-#include(../ComponentSettings.cmake)
+include(../ComponentSettings.cmake)
 add_subdirectory(synopsis)
 
 include_directories(fsw/public_inc)
