@@ -315,51 +315,6 @@ void SYN_ProcessGroundCommand(void)
             break;
 
         /*
-        ** Enable Command
-        */
-        case SYN_ENABLE_CC:
-            if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
-            {
-                CFE_EVS_SendEvent(SYN_CMD_ENABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: Enable command received");
-                SYN_Enable();
-            }
-            break;
-
-        /*
-        ** Disable Command
-        */
-        case SYN_DISABLE_CC:
-            if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_NoArgs_cmd_t)) == OS_SUCCESS)
-            {
-                CFE_EVS_SendEvent(SYN_CMD_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: Disable command received");
-                SYN_Disable();
-            }
-            break;
-
-        /*
-        ** TODO: Edit and add more command codes as appropriate for the application
-        ** Set Configuration Command
-        ** Note that this is an example of a command that has additional arguments
-        */
-        case SYN_CONFIG_CC:
-            if (SYN_VerifyCmdLength(SYN_AppData.MsgPtr, sizeof(SYN_Config_cmd_t)) == OS_SUCCESS)
-            {
-                uint32_t config = ntohl(((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg); // command is defined as big-endian... need to convert to host representation
-                CFE_EVS_SendEvent(SYN_CMD_CONFIG_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: Configuration command received: %u", config);
-                /* Command device to send HK */
-                status = SYN_CommandDevice(&SYN_AppData.SynUart, SYN_DEVICE_CFG_CMD, config);
-                if (status == OS_SUCCESS)
-                {
-                    SYN_AppData.HkTelemetryPkt.DeviceCount++;
-                }
-                else
-                {
-                    SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-                }
-            }
-            break;
-
-        /*
         ** Add Data Command
         */
         // Add data to the synopsis database.  
@@ -673,84 +628,6 @@ void SYN_ResetCounters(void)
     SYN_AppData.HkTelemetryPkt.DeviceCount = 0;
     return;
 } 
-
-
-/*
-** Enable Component
-*/
-void SYN_Enable(void)
-{
-    int32 status = OS_SUCCESS;
-
-    /* Check that device is disabled */
-    if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_DISABLED)
-    {
-        /*
-        ** Initialize hardware interface data
-        ** TODO: Make specific to your application depending on protocol in use
-        ** Note that other components provide examples for the different protocols available
-        */ 
-        SYN_AppData.SynUart.deviceString = SYN_CFG_STRING;
-        SYN_AppData.SynUart.handle = SYN_CFG_HANDLE;
-        SYN_AppData.SynUart.isOpen = PORT_CLOSED;
-        SYN_AppData.SynUart.baud = SYN_CFG_BAUDRATE_HZ;
-        SYN_AppData.SynUart.access_option = uart_access_flag_RDWR;
-
-        /* Open device specific protocols */
-        status = uart_init_port(&SYN_AppData.SynUart);
-        if (status == OS_SUCCESS)
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceCount++;
-            SYN_AppData.HkTelemetryPkt.DeviceEnabled = SYN_DEVICE_ENABLED;
-            CFE_EVS_SendEvent(SYN_ENABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: Device enabled");
-        }
-        else
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(SYN_UART_INIT_ERR_EID, CFE_EVS_EventType_ERROR, "SYN: UART port initialization error %d", status);
-        }
-    }
-    else
-    {
-        SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(SYN_ENABLE_ERR_EID, CFE_EVS_EventType_ERROR, "SYN: Device enable failed, already enabled");
-    }
-    return;
-}
-
-
-/*
-** Disable Component
-*/
-void SYN_Disable(void)
-{
-    int32 status = OS_SUCCESS;
-
-    /* Check that device is enabled */
-    if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_ENABLED)
-    {
-        /* Open device specific protocols */
-        status = uart_close_port(&SYN_AppData.SynUart);
-        if (status == OS_SUCCESS)
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceCount++;
-            SYN_AppData.HkTelemetryPkt.DeviceEnabled = SYN_DEVICE_DISABLED;
-            CFE_EVS_SendEvent(SYN_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "SYN: Device disabled");
-        }
-        else
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(SYN_UART_CLOSE_ERR_EID, CFE_EVS_EventType_ERROR, "SYN: UART port close error %d", status);
-        }
-    }
-    else
-    {
-        SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(SYN_DISABLE_ERR_EID, CFE_EVS_EventType_ERROR, "SYN: Device disable failed, already disabled");
-    }
-    return;
-}
-
 
 /*
 ** Verify command packet length matches expected

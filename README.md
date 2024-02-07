@@ -28,16 +28,12 @@ Additionally, the component needs to be made aware of two of these paths as well
 These may also be reconfigured, or passed in elsewhere.  How this is accomplished may also be changed per mission SYNOPSIS needs to be integrated into.  In this example, these two paths are utilized for resetting the database, and the component.  It is up to the user to determine the persistance of the database file, file locations, and how components would need to be reset.
 
 ## Component Usage
-The SYN component is initalized as with other components within the SYN_AppInit function.  For this example, memory is located within this function, as well as the initialization of the SYNOPSIS Library.
+The SYN component is initalized as with other components within the SYN_AppInit function.  For this example, memory is allocated within this function, as well as the initialization of the SYNOPSIS Library.
 
-The SYN component has all of the default command codes as the sample component.  However additional components have been added in order to manually utilize the SYNOPSIS library.  These commands are as follows:
 
 # Default Command Codes
 * SYN_NOOP_CC
 * SYN_RESET_COUNTERS_CC
-* SYN_ENABLE_CC
-* SYN_DIABLE_CC
-* SYN_CONFIG_CC
 
 # SYN Component Example Command Codes
 * SYN_ADD_DATA_CC - Add individual data components to SYNOPSIS (8 total)
@@ -64,103 +60,4 @@ Following setup, users must add the data to be analyzed to the SYNOPSIS database
 The syn component provides an executable SYNOPSIS example for the user.  This syn component is a UART device that accepts multiple commands, including requests for telemetry and data.
 The available FSW is for use in the core Flight System (cFS) while the GSW supports COSMOS.
 A NOS3 simulation is available which includes both syn and 42 data providers.
-
-# Device Communications
-The protocol, commands, and responses of the component are captured below.
-
-## Protocol
-The protocol in use is UART 115200 8N1.
-The device is speak when spoken too.
-All communications with the device require / contain a header of 0xDEAD and a trailer of 0xBEEF.
-
-## Commands
-All commands received by the device are echoed back to the sender to confirm receipt.
-Should commmands involve a reply, the device immediately sends the reply after the command echo.
-Device commands are all formatted in the same manner and are fixed in size:
-* uint16, 0xDEAD
-* uint8, command identifier
-  - (0) Get Housekeeping
-  - (1) Get Syn
-  - (2) Set Configuration
-* uint32, command payload
-  - Unused for all but set configuration command
-* uint16, 0xBEEF
-
-## Response
-Response formats are as follows:
-* Housekeeping
-  - uint16, 0xDEAD
-  - uint32, Command Counter
-    * Increments for each command received
-  - uint32, Configuration
-    * Internal configuration number in use by the device
-  - uint32, Status
-    * Self reported status of the component where zero is completely healthy and each bit represents different errors
-    * No means to clear / set status except for a power cycle to the device
-  - uint16, 0xBEEF
-* Syn
-  - uint16, 0xDEAD
-  - uint32, Command Counter
-    * Increments for each command received
-  - uint16, Data X
-    * X component of syn data
-  - uint16, Data Y
-    * X component of syn data
-  - uint16, Data Z
-    * X component of syn data
-  - uint16, 0xBEEF
-
-
-# Configuration
-The various configuration parameters available for each portion of the component are captured below.
-
-## FSW
-Refer to the file [fsw/platform_inc/syn_platform_cfg.h](fsw/platform_inc/syn_platform_cfg.h) for the default
-configuration settings, as well as a summary on overriding parameters in mission-specific repositories.
-
-## Simulation
-The default configuration returns data that is X * 0.001, Y * 0.002, and Z * 0.003 the request count after conversions:
-```
-<simulator>
-    <name>syn_sim</name>
-    <active>true</active>
-    <library>libsyn_sim.so</library>
-    <hardware-model>
-        <type>SYN</type>
-        <connections>
-            <connection><type>command</type>
-                <bus-name>command</bus-name>
-                <node-name>syn-sim-command-node</node-name>
-            </connection>
-            <connection><type>usart</type>
-                <bus-name>usart_29</bus-name>
-                <node-port>29</node-port>
-            </connection>
-        </connections>
-        <data-provider>
-            <type>SYN_PROVIDER</type>
-        </data-provider>
-    </hardware-model>
-</simulator>
-```
-
-## 42
-Optionally the 42 data provider can be configured in the `nos3-simulator.xml`:
-```
-        <data-provider>
-            <type>SYN_42_PROVIDER</type>
-            <hostname>localhost</hostname>
-            <port>4242</port>
-            <max-connection-attempts>5</max-connection-attempts>
-            <retry-wait-seconds>5</retry-wait-seconds>
-            <spacecraft>0</spacecraft>
-        </data-provider>
-```
-
-
-
-## Releases
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the tags on this repository.
-
-* v0.1.0 - 02/06/20214
-  - Initial release with version tagging
+ 

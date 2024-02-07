@@ -23,15 +23,15 @@
 #define SYN_CMD_ERR_EID               10
 #define SYN_CMD_NOOP_INF_EID          11
 #define SYN_CMD_RESET_INF_EID         12
-#define SYN_CMD_ENABLE_INF_EID        13
-#define SYN_ENABLE_INF_EID            14
-#define SYN_ENABLE_ERR_EID            15
-#define SYN_CMD_DISABLE_INF_EID       16
-#define SYN_DISABLE_INF_EID           17
-#define SYN_DISABLE_ERR_EID           18
+//#define SYN_CMD_ENABLE_INF_EID        13
+//#define SYN_ENABLE_INF_EID            14
+//#define SYN_ENABLE_ERR_EID            15
+//#define SYN_CMD_DISABLE_INF_EID       16
+//#define SYN_DISABLE_INF_EID           17
+//#define SYN_DISABLE_ERR_EID           18
 
 /* Device specific command event IDs */
-#define SYN_CMD_CONFIG_INF_EID        20
+//#define SYN_CMD_CONFIG_INF_EID        20
 
 /* Standard telemetry event IDs */
 #define SYN_DEVICE_TLM_ERR_EID        30

@@ -15,13 +15,9 @@
 
 /*
 ** Ground Command Codes
-** TODO: Add additional commands required by the specific component
 */
 #define SYN_NOOP_CC                 0
 #define SYN_RESET_COUNTERS_CC       1
-#define SYN_ENABLE_CC               2
-#define SYN_DISABLE_CC              3
-#define SYN_CONFIG_CC               4
 #define SYN_RESET_CC                5
 #define SYN_PRIO_CC                 6
 #define SYN_GET_PDATA_CC            7
