@@ -30,7 +30,6 @@
 ** TODO: Add additional commands required by the specific component
 */
 #define SYN_REQ_HK_TLM              0
-#define SYN_REQ_DATA_TLM            1
 
 
 /*
@@ -54,19 +53,6 @@ typedef struct
 
 } SYN_Config_cmd_t;
 
-
-/*
-** SYN device telemetry definition
-*/
-typedef struct 
-{
-    CFE_MSG_TelemetryHeader_t TlmHeader;
-    //SYN_Device_Data_tlm_t Syn;
-
-} __attribute__((packed)) SYN_Device_tlm_t;
-#define SYN_DEVICE_TLM_LNGTH sizeof ( SYN_Device_tlm_t )
-
-
 /*
 ** SYN housekeeping type definition
 */
@@ -75,14 +61,6 @@ typedef struct
     CFE_MSG_TelemetryHeader_t TlmHeader;
     uint8   CommandErrorCount;
     uint8   CommandCount;
-    uint8   DeviceErrorCount;
-    uint8   DeviceCount;
-  
-    /*
-    ** TODO: Edit and add specific telemetry values to this struct
-    */
-    uint8   DeviceEnabled;
-    //SYN_Device_HK_tlm_t DeviceHK;
 
 } __attribute__((packed)) SYN_Hk_tlm_t;
 #define SYN_HK_TLM_LNGTH sizeof ( SYN_Hk_tlm_t )

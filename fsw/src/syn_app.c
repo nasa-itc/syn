@@ -168,9 +168,9 @@ int32 SYN_AppInit(void)
     ** Initialize the device packet message
     ** This packet is specific to your application
     */
-    CFE_MSG_Init(CFE_MSG_PTR(SYN_AppData.DevicePkt.TlmHeader),
-                   CFE_SB_ValueToMsgId(SYN_DEVICE_TLM_MID),
-                   SYN_DEVICE_TLM_LNGTH);
+    // CFE_MSG_Init(CFE_MSG_PTR(SYN_AppData.DevicePkt.TlmHeader),
+    //                CFE_SB_ValueToMsgId(SYN_DEVICE_TLM_MID),
+    //                SYN_DEVICE_TLM_LNGTH);
 
 
     /*
@@ -194,12 +194,6 @@ int32 SYN_AppInit(void)
     ** Always reset all counters during application initialization 
     */
     SYN_ResetCounters();
-
-    /*
-    ** Initialize application data
-    ** Note that counters are excluded as they were reset in the previous code block
-    */
-    SYN_AppData.HkTelemetryPkt.DeviceEnabled = SYN_DEVICE_DISABLED;
 
     /* 
      ** Send an information event that the app has initialized. 
@@ -320,12 +314,7 @@ void SYN_ProcessGroundCommand(void)
                 {
                     OS_printf("*! SYN:  Unable to add additional DPMSG!\n");
                 }
-                SYN_AppData.HkTelemetryPkt.DeviceCount++;
-            }
-            else
-            {
-                SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            }            
+            }        
             break; 
 
         /*  
@@ -337,18 +326,11 @@ void SYN_ProcessGroundCommand(void)
             {
                 CFE_EVS_SendEvent(SYN_CMD_CONFIG_DL_EID, CFE_EVS_EventType_INFORMATION, "SYN: Config DL command received");
 
-                if (status == OS_SUCCESS)
-                {
-                    dl_size = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 10.0);
-                    OS_printf("** SYNOPSIS DL SIZE SET: %f\n", dl_size);
-                    SYN_AppData.HkTelemetryPkt.DeviceCount++;
-                }
-                else
-                {
-                    SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-                }
+                dl_size = ((((SYN_Config_cmd_t*) SYN_AppData.MsgPtr)->DeviceCfg) / 10.0);
+                OS_printf("** SYNOPSIS DL SIZE SET: %f\n", dl_size);
             }
             break;
+            
         /*
         ** Configure Sigma Command
         */
@@ -364,11 +346,6 @@ void SYN_ProcessGroundCommand(void)
                     
                     owls_set_sigma(sigma);
                     OS_printf("** SYNOPSIS ALPHA SET: %f\n", sigma);
-                    SYN_AppData.HkTelemetryPkt.DeviceCount++;
-                }
-                else
-                {
-                    SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
                 }
             }
             break;
@@ -487,10 +464,6 @@ void SYN_ProcessTelemetryRequest(void)
             SYN_ReportHousekeeping();
             break;
 
-        case SYN_REQ_DATA_TLM:
-            SYN_ReportDeviceTelemetry();
-            break;
-
         /*
         ** Invalid Command Codes
         */
@@ -511,57 +484,12 @@ void SYN_ProcessTelemetryRequest(void)
 void SYN_ReportHousekeeping(void)
 {
     int32 status = OS_SUCCESS;
-
-    /* Check that device is enabled */
-    if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_ENABLED)
-    {
-        if (status == OS_SUCCESS)
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceCount++;
-        }
-        else
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(SYN_REQ_HK_ERR_EID, CFE_EVS_EventType_ERROR, 
-                    "SYN: Request device HK reported error %d", status);
-        }
-    }
-    /* Intentionally do not report errors if disabled */
-
     /* Time stamp and publish housekeeping telemetry */
     CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &SYN_AppData.HkTelemetryPkt);
     CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &SYN_AppData.HkTelemetryPkt, true);
     return;
 }
 
-
-/*
-** Collect and Report Device Telemetry
-*/
-void SYN_ReportDeviceTelemetry(void)
-{
-    int32 status = OS_SUCCESS;
-
-    /* Check that device is enabled */
-    if (SYN_AppData.HkTelemetryPkt.DeviceEnabled == SYN_DEVICE_ENABLED)
-    {
-        if (status == OS_SUCCESS)
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceCount++;
-            /* Time stamp and publish data telemetry */
-            CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &SYN_AppData.DevicePkt);
-            CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &SYN_AppData.DevicePkt, true);
-        }
-        else
-        {
-            SYN_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(SYN_REQ_DATA_ERR_EID, CFE_EVS_EventType_ERROR, 
-                    "SYN: Request device data reported error %d", status);
-        }
-    }
-    /* Intentionally do not report errors if disabled */
-    return;
-}
 
 
 /*
@@ -571,8 +499,6 @@ void SYN_ResetCounters(void)
 {
     SYN_AppData.HkTelemetryPkt.CommandErrorCount = 0;
     SYN_AppData.HkTelemetryPkt.CommandCount = 0;
-    SYN_AppData.HkTelemetryPkt.DeviceErrorCount = 0;
-    SYN_AppData.HkTelemetryPkt.DeviceCount = 0;
     return;
 } 
 
