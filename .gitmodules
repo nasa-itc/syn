@@ -1,4 +1,4 @@
 [submodule "synopsis"]
 	path = synopsis
-	url = git@aetd-git.gsfc.nasa.gov:itc/jpl/synopsis/synopsis.git
-	branch = 1-c-bridge-for-c-library
+	url = git@github.com:nasa-itc/synopsis.git
+	branch = main
