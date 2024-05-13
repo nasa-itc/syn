@@ -4,6 +4,9 @@ project(CFS_SYN_APP C)
 include(../../ComponentSettings.cmake)
 add_subdirectory(../synopsis ..)
 
+set(CMAKE_C_FLAGS "-Wno-format")
+set(CMAKE_CXX_FLAGS "-Wno-format")
+
 include_directories(public_inc)
 include_directories(mission_inc)
 include_directories(platform_inc)
