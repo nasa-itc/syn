@@ -16,6 +16,6 @@
 ** id conflict with other apps.  Performance IDs are used for cFE performance
 ** metrics.
 */
-#define SYN_PERF_ID          500
+#define SYN_PERF_ID          560
 
 #endif /* _SYN_PERFIDS_H_ */
